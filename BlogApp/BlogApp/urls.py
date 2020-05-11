@@ -15,8 +15,23 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.contrib.auth import urls
+from django.contrib.auth import views as auth_views
+
+from rest_framework_jwt.views import ObtainJSONWebToken, RefreshJSONWebToken
+
+obtain_jwt_token = ObtainJSONWebToken(user_model='API.User').as_view()
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('API.urls')),
+    path('auth/', obtain_jwt_token),
+    path('change-password/', auth_views.PasswordChangeView.as_view()),
+    path('reset-password/', auth_views.PasswordResetView.as_view()),
+    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(),
+         name='password_reset_done'),
+    path('reset-password/<uidb64>/<token>/',
+         auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('reset-passwordreset/done/', auth_views.PasswordResetCompleteView.as_view(),
+         name='password_reset_complete'),
 ]

@@ -6,13 +6,16 @@ from .models import User, Post, Comment, Category, PostCategory, Tag, PostTag
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('name', 'email','password','intro','profile')
+        fields = ('id', 'name', 'email', 'password', 'intro', 'profile')
 
 
 class PostSerializer(serializers.ModelSerializer):
+    author = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Post
-        fields = '__all__'
+        fields = ('author', 'title', 'parent',
+                  'summary', 'content', 'published')
 
 
 class CommentSerializer(serializers.ModelSerializer):

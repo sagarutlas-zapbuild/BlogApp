@@ -1,52 +1,19 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager, Group
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from .managers import UserManager
 # Create your models here.
-
-
-class UserManager(BaseUserManager):
-    use_in_migrations = True
-
-    def _create_user(self, email, password, **extra_fields):
-        """
-        Create and save a user with the given email, and password.
-        """
-        if not email:
-            raise ValueError('The given email must be set')
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_user(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', False)
-        extra_fields.setdefault('is_superuser', False)
-        extra_fields.setdefault('groups','users')
-        return self._create_user(email, password, **extra_fields)
-
-    def create_superuser(self, email, password, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
-
-        return self._create_user(email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=25)
-    email = models.EmailField(unique=True)   
+    email = models.EmailField(unique=True)
     password = models.CharField(max_length=300)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now=True)
     """ The brief introduction of the Author to be displayed on each post. """
-    intro = models.CharField(max_length=100, null=True)
+    intro = models.CharField(max_length=100, null=True, default=None)
     """ The author details to be displayed on the Author Page. """
-    profile = models.TextField(null=True)
+    profile = models.TextField(null=True, default=None)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
@@ -54,16 +21,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = UserManager()
 
+    def __str__(self):
+        return self.name + " (" + self.email + ")"
+
 
 class Post(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, to_field='email')
     parent = models.ForeignKey("Post", on_delete=models.DO_NOTHING, null=True)
     title = models.CharField(max_length=100)
     """ The meta title to be used for browser title and SEO. """
-    meta_title = models.CharField(max_length=150, null=True)
+    meta_title = models.CharField(max_length=150, null=True, blank=True)
     """ The post slug to form the URL. """
-    slug = models.CharField(max_length=100, null=True)
-    summary = models.TextField(null=True)
+    slug = models.CharField(max_length=100, null=True, blank=True)
+    summary = models.CharField(null=True, blank=True, max_length=103)
     published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
